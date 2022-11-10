@@ -1,0 +1,104 @@
+# Breast cancer Bulk RNAseq MCF7 3D vs. 2 D
+
+install.packages("ggplot2")
+install.packages("ggrepel")
+install.packages("dlyr")
+install.packages("tidyverse")
+
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(tidyverse)
+
+setwd("/Users/blust/Documents/PhD/bioinformatics/Bulk_rnaseq")
+
+de_genes <- read.csv2('MCF7_diff.csv', header = TRUE, sep = ";", quote = "\"", fill = TRUE)
+
+head(de_genes)
+colnames(de_genes)
+dim(de_genes)
+
+# set threshold 
+de_genes$diffexpressed[de_genes$log2FoldChange > 0.38 & de_genes$pvalue < 0.05] <- "UP"
+de_genes$diffexpressed[de_genes$log2FoldChange < -0.38 & de_genes$pvalue < 0.05] <- "DOWN"
+
+head(de_genes)
+
+de_genes$delabel <- NA
+
+head(de_genes)
+
+#Vulcano plot
+mycolors <- c("purple", "lightgrey", "darkorange")
+names(mycolors) <- c("UP", "NA", "DOWN")
+
+#data=subset of de_genes without NA´s
+
+MCF7=subset(de_genes,!is.na(padj))
+
+ggplot(data=MCF7,aes(x=log2FoldChange,y=(-log10(padj)),col=diffexpressed,label=delabel))+
+  geom_point()+
+  theme_minimal()+
+  geom_text_repel()+
+  scale_color_manual(values= mycolors)+
+  theme(text=element_text(size=20))
+
+
+#sort data and then take top 10 and set threshold
+arrange(MCF7,padj)
+head(arrange(MCF7,padj),10)
+thres=head(arrange(MCF7,padj),10)$padj[10]
+head(arrange(MCF7,padj),10)$Gene.name
+
+#vulcanoplot 
+MCF7$delabel[MCF7$padj <= thres]<-(MCF7$Gene.name[MCF7$padj<=thres])
+
+select<- MCF7 %>%
+  filter(Gene.name %in% c("UGT2B15", "TIMP3", "TIMP1", "SERPINA1", "GPNMB", "TJP1","PTPRS", "SMAD6", "TGFB2", "TJP1"))
+select_right <- MCF7 %>%
+  filter(Gene.name %in% c("UGT2B15", "TIMP3", "TIMP1", "SERPINA1", "GPNMB"))
+select_left <- MCF7 %>%
+  filter(Gene.name %in% c("PTPRS", "SMAD6", "TGFB2", "TJP1"))
+
+ggplot(data=MCF7,aes(x=log2FoldChange,y=(-log10(padj)),col=diffexpressed,label=delabel))+
+  geom_point()+
+  theme_minimal()+
+  geom_point(data = select,
+              fill = 'red',
+              colour = "red")+
+  geom_label_repel(data = select_right,
+                   aes(label = Gene.name),
+                   force = 2,
+                   nudge_y = 1)+
+  geom_label_repel(data = select_left,
+                   aes(label = Gene.name),
+                   nudge_y = 1)
+  geom_text_repel()+
+  scale_color_manual(values= mycolors)+
+  geom_vline(xintercept=c(-0.38,0.38),col='darkgrey', linetype="dashed")+
+  geom_hline(yintercept=-log10(0.05),col='darkgrey', linetype="dashed")
+
+ggplot(data=MCF7,aes(x=log2FoldChange,y=(-log10(padj)),col=diffexpressed,label=delabel))+
+  geom_point()+
+  theme_minimal()+
+  geom_point(data = select,
+             fill = 'red',
+             colour = "red")+
+  geom_label_repel(data = select_right,
+                  aes(label = Gene.name),
+                  col = 'black',
+                  size = 3,
+                  nudge_x = 0.75)+
+  geom_label_repel(data = select_left,
+                   aes(label = Gene.name),
+                   col = 'black',
+                   size = 3,
+                   nudge_x = -0.75)+
+  geom_text_repel(col = 'red',
+                  size = 3,
+                  check_overlap = TRUE)+
+  scale_color_manual(values= mycolors)+
+  geom_vline(xintercept=c(-0.38,0.38),col='darkgrey', linetype="dashed")+
+  geom_hline(yintercept=-log10(0.12),col='darkgrey', linetype="dashed")
+
+ggsave('MCF7_select2.svg')
