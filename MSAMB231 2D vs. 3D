@@ -1,0 +1,69 @@
+
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+
+setwd("/Users/blust/Documents/PhD/bioinformatics/Bulk_rnaseq")
+
+MDAMB <- read.csv2('MDAMB231_diff.csv', header = TRUE, sep = ";", quote = "\"", fill = TRUE)
+
+head(MDAMB)
+
+# set threshold 
+MDAMB$diffexpressed[MDAMB$log2FoldChange > 0.38 & MDAMB$pvalue < 0.05] <- "UP"
+MDAMB$diffexpressed[MDAMB$log2FoldChange < -0.38 & MDAMB$pvalue < 0.05] <- "DOWN"
+
+head(MDAMB)
+
+MDAMB$delabel <- NA
+
+#vulcanoplot
+
+mycolors <- c("purple", "lightgrey", "darkorange")
+names(mycolors) <- c("UP", "NA", "DOWN")
+
+MDAMB=subset(MDAMB,!is.na(padj))
+       
+ggplot(data=MDAMB,aes(x=log2FoldChange,y=-log10(padj),col=diffexpressed,label=delabel))+
+  geom_point()+
+  theme_minimal()+
+  scale_color_manual(values= mycolors)+
+  theme(text=element_text(size=20))
+
+arrange(MDAMB,padj)
+head(arrange(MDAMB,padj),10)
+thres=head(arrange(MDAMB,padj),10)$padj[10]
+head(arrange(MDAMB,padj),10)$Gene.name
+
+MDAMB$delabel[MDAMB$padj <= thres]<-(MDAMB$Gene.name[MDAMB$padj<=thres])
+
+select_right2 <- MDAMB %>%
+  filter(Gene.name %in% c("TIMP1", "SERPINA1", "GPNMB", "MMP1", "MGP"))
+select_left2 <- MDAMB %>%
+  filter(Gene.name %in% c("KISS1"))
+
+ggplot(data=MDAMB,aes(x=log2FoldChange,y=(-log10(padj)),col=diffexpressed,label=delabel))+
+  geom_point()+
+  theme_minimal()+
+  geom_point(data = select1,
+             fill = 'red',
+             colour = "red")+
+  geom_label_repel(data = select_right2,
+                   aes(label = Gene.name),
+                   col = 'black',
+                   size = 3,
+                   nudge_x = 1)+
+  geom_label_repel(data = select_left2,
+                   aes(label = Gene.name),
+                   col = 'black',
+                   size = 3,
+                   nudge_x = -1)+
+  geom_text_repel(col = 'red',
+                  size = 3,
+                  check_overlap = TRUE)+
+  scale_color_manual(values= mycolors)+
+  geom_vline(xintercept=c(-0.38,0.38),col='darkgrey', linetype="dashed")+
+  geom_hline(yintercept=-log10(0.24),col='darkgrey', linetype="dashed")
+
+
+ggsave('MDAMB_select.svg')
