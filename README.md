@@ -1,4 +1,5 @@
 # vulcanoplot_breastcancer2Dvs3D
 
-Herein, two breast cancer cell lines (MCF7 and MDAMB231) cultured in 2D and 3D in FN-silk foam networks for 7 days were analysed with BulkRNAseq. 
-The differential gene expression was analysed with DEseq2 and visualized in vulcanoplots using ggplot2 package. 
+Differentially expressed genes comparing MCF-7 3D day 7 vs MCF-7 2D day 7 and MDA-MB-231 3D Day7 vs MDA-MB-231 2D day 7 were visualized by volcano plot 
+using the ggplot2 package in R. The significance thresholds for up and down-regulated genes were set to the adjusted p-value < 0,05 and the log2 fold-
+change values ³ |± 0,38|. The top 10 DEGs were highlighted (dark grey), and several important genes were marked (black).
